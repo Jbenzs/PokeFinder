@@ -20,6 +20,8 @@ class ViewController: UIViewController, MKMapViewDelegate, CLLocationManagerDele
         
         mapView.delegate = self
         mapView.userTrackingMode = MKUserTrackingMode.follow
+        
+        
     }
     
     override func viewDidAppear(_ animated: Bool) {
