@@ -69,6 +69,7 @@ class ViewController: UIViewController, MKMapViewDelegate, CLLocationManagerDele
     
     func mapView(_ mapView: MKMapView, viewFor annotation: MKAnnotation) -> MKAnnotationView? {
         
+        let annoIdentifier = "Pokemon"
         var annotationView: MKAnnotationView?
         
         if annotation.isKind(of: MKUserLocation.self) {
@@ -76,9 +77,25 @@ class ViewController: UIViewController, MKMapViewDelegate, CLLocationManagerDele
             annotationView = MKAnnotationView(annotation: annotation, reuseIdentifier: "User")
             annotationView?.image = UIImage(named: "ash")
             
-            }
+        } else if let deqAnno = mapView.dequeueReusableAnnotationView(withIdentifier: annoIdentifier){
+            annotationView = deqAnno
+            annotationView?.annotation = annotation
+        }else {
+            let av = MKAnnotationView(annotation: annotation, reuseIdentifier: annoIdentifier)
+            av.rightCalloutAccessoryView = UIButton(type: .detailDisclosure)
+            annotationView = av
+    }
+        if let annotationView = annotationView, let anno = annotation as? PokeAnnotation {
+            
+            annotationView.canShowCallout = true
+            annotationView.image = UIImage(named: "\(anno.pokemonNumber)")
+            let btnn = UIButton()
+            btnn.frame = CGRect(x: 0 , y: 0, width: 30, height: 30)
+            btnn.setImage(UIImage(named: "map"), for: .normal)
+            annotationView.rightCalloutAccessoryView = btnn
+        }
         
-        return annotationView
+          return annotationView
     }
     // Function for sighting of pokemon 
     func createSighting(forLocation location: CLLocation, withPokemon pokeId:Int) {
@@ -100,6 +117,30 @@ class ViewController: UIViewController, MKMapViewDelegate, CLLocationManagerDele
         })
         
         
+    }
+    
+    func mapView(_ mapView: MKMapView, regionWillChangeAnimated animated: Bool) {
+        
+        let loc = CLLocation(latitude: mapView.centerCoordinate.latitude, longitude: mapView.centerCoordinate.longitude)
+        
+        showSightingOnMap(location: loc)
+    }
+    
+    func mapView(_ mapView: MKMapView, annotationView view: MKAnnotationView, calloutAccessoryControlTapped control: UIControl) {
+        
+        if let anno = view.annotation as? PokeAnnotation {
+            //PlaceMark for Apple maps
+            let place = MKPlacemark(coordinate: anno.coordinate)
+            let destination = MKMapItem(placemark: place)
+            destination.name = "Pokemon Sighting"
+            let regionDistance: CLLocationDistance = 1000
+            let regionSpan = MKCoordinateRegionMakeWithDistance(anno.coordinate, regionDistance, regionDistance)
+            
+            let options = [MKLaunchOptionsMapCenterKey: NSValue(mkCoordinate: regionSpan.center),  MKLaunchOptionsMapSpanKey: NSValue(mkCoordinateSpan: regionSpan.span), MKLaunchOptionsDirectionsModeKey: MKLaunchOptionsDirectionsModeWalking] as [String : Any]
+            
+            MKMapItem.openMaps(with: [destination], launchOptions: options)
+            
+        }
     }
 
       @IBAction func spotPokemon(_ sender: AnyObject) {
